@@ -79,6 +79,22 @@ def update_short_url(short_code):
     else:
         return jsonify({"error": "Short URL not found"}), 404
 
+#4 DELETE /shorten/<short_code> - Delete an existing short URL
+@shorten_url.route('/shorten/<short_code>', methods=['DELETE'])
+def delete_short_url(short_code):
+    # Check if the short code exists
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('SELECT * FROM urls WHERE short_code = %s', (short_code,))
+    result = cursor.fetchone()
+
+    if result:
+        # Delete the URL
+        cursor.execute('DELETE FROM urls WHERE short_code = %s', (short_code,))
+        connection.commit()
+        return '', 204  # No content, successfully deleted
+    else:
+        return jsonify({"error": "Short URL not found"}), 404
 
 #5 GET /shorten/<short_code>/stats - Get access count and increment it
 @shorten_url.route('/shorten/<short_code>/stats', methods=['GET'])
