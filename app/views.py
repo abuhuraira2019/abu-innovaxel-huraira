@@ -10,6 +10,19 @@ def create_short_url():
 
     # Generate a random short code (6 characters)
     short_code = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+        # Save to database
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('INSERT INTO urls (original_url, short_code) VALUES (%s, %s)', (url, short_code))
+    connection.commit()
+
+    return jsonify({
+        'id': cursor.lastrowid,
+        'url': url,
+        'shortCode': short_code,
+        'createdAt': '2021-09-01T12:00:00Z',
+        'updatedAt': '2021-09-01T12:00:00Z',
+    }), 201
 
     # Normally, you would save the mapping to a database here
 
@@ -22,14 +35,22 @@ def create_short_url():
     }), 201
 @shorten_url.route('/shorten/<short_code>', methods=['GET'])
 def get_original_url(short_code):
-    # In a real app, you would query the database to find the original URL
-    original_url = "https://www.example.com/some/long/url"  # Replace with dynamic URL
+    # Query the database for the short code
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('SELECT original_url FROM urls WHERE short_code = %s', (short_code,))
+    result = cursor.fetchone()
 
-    return jsonify({
-        'id': 1,  # Replace with dynamic ID
-        'url': original_url,
-        'shortCode': short_code,
-        'createdAt': '2021-09-01T12:00:00Z',
-        'updatedAt': '2021-09-01T12:00:00Z',
-    })
+    if result:
+        original_url = result[0]
+        return jsonify({
+            'id': 1,  # Replace with dynamic ID
+            'url': original_url,
+            'shortCode': short_code,
+            'createdAt': '2021-09-01T12:00:00Z',
+            'updatedAt': '2021-09-01T12:00:00Z',
+        })
+    else:
+        return jsonify({"error": "Short URL not found"}), 404
+
 
