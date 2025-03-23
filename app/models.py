@@ -1,5 +1,5 @@
 import mysql.connector
-
+from flask import current_app
 def get_db_connection():
     connection = mysql.connector.connect(
         host='localhost',
