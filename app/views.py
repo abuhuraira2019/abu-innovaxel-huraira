@@ -33,22 +33,27 @@ def create_short_url():
         'createdAt': '2021-09-01T12:00:00Z',  # Static example time
         'updatedAt': '2021-09-01T12:00:00Z',  # Static example time
     }), 201
-@shorten_url.route('/shorten/<short_code>', methods=['GET'])
-def get_original_url(short_code):
+@shorten_url.route('/shorten/<short_code>/stats', methods=['GET'])
+def get_url_statistics(short_code):
     # Query the database for the short code
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute('SELECT original_url FROM urls WHERE short_code = %s', (short_code,))
+    cursor.execute('SELECT access_count FROM urls WHERE short_code = %s', (short_code,))
     result = cursor.fetchone()
 
     if result:
-        original_url = result[0]
+        access_count = result[0]
+        # Increment access count
+        cursor.execute('UPDATE urls SET access_count = %s WHERE short_code = %s', (access_count + 1, short_code))
+        connection.commit()
+
         return jsonify({
-            'id': 1,  # Replace with dynamic ID
-            'url': original_url,
+            'id': 1,
+            'url': 'https://www.example.com/some/long/url',
             'shortCode': short_code,
             'createdAt': '2021-09-01T12:00:00Z',
             'updatedAt': '2021-09-01T12:00:00Z',
+            'accessCount': access_count + 1
         })
     else:
         return jsonify({"error": "Short URL not found"}), 404
